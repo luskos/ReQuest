@@ -1,0 +1,53 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+    <Frame name="ReQuestFrame" parent="UIParent" hidden="true">
+        <Size x="400" y="300"/>
+        <Anchors>
+            <Anchor point="CENTER"/>
+        </Anchors>
+        <Backdrop bgFile="Interface/DialogFrame/UI-DialogBox-Background"/>
+        
+        <Layers>
+            <Layer level="OVERLAY">
+                <FontString name="ReQuestTitle" inherits="GameFontNormalLarge" text="ReQuest Log">
+                    <Size x="380" y="30"/>
+                    <Anchors>
+                        <Anchor point="TOP" relativeTo="$parent" relativePoint="TOP" x="0" y="-10"/>
+                    </Anchors>
+                </FontString>
+            </Layer>
+        </Layers>
+
+        <Frames>
+            <!-- Scroll Frame for Active Quests -->
+            <ScrollFrame name="ReQuestScrollFrame" inherits="UIPanelScrollFrameTemplate">
+                <Size x="380" y="200"/>
+                <Anchors>
+                    <Anchor point="TOP" relativeTo="ReQuestTitle" relativePoint="BOTTOM" x="0" y="-10"/>
+                </Anchors>
+                <Frames>
+                    <Frame name="ReQuestContent">
+                        <Size x="380" y="500"/>
+                    </Frame>
+                </Frames>
+            </ScrollFrame>
+
+            <!-- Toggle Button -->
+            <Button name="ReQuestToggleButton" inherits="UIPanelButtonTemplate">
+                <Size x="100" y="30"/>
+                <Anchors>
+                    <Anchor point="BOTTOM" relativeTo="$parent" relativePoint="BOTTOM" x="0" y="10"/>
+                </Anchors>
+                <Text text="Toggle UI"/>
+                <Scripts>
+                    <OnClick>
+                        if ReQuestFrame:IsShown() then
+                            ReQuestFrame:Hide()
+                        else
+                            ReQuestFrame:Show()
+                        end
+                    </OnClick>
+                </Scripts>
+            </Button>
+        </Frames>
+    </Frame>
+</Ui>

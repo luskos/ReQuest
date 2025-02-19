@@ -1,0 +1,10 @@
+## Interface: 110005
+## Title: ReQuest
+## Author: Rushbourne
+## Notes: Provides quest hints in multiple languages.
+## Version: 1.0
+## SavedVariables: ReQuestDB
+
+ReQuest_Quests.lua
+ReQuest.lua
+ReQuest.xml

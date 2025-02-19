@@ -1,0 +1,1 @@
+ReQuestDB = ReQuestDB or { trackedQuests = {} }
