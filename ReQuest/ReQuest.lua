@@ -1,5 +1,27 @@
 -- Ensure ReQuestDB exists
 ReQuestDB = ReQuestDB or { lang = "bgn", isVisible = true }
+local icon = LibStub("LibDBIcon-1.0")
+
+local addon = LibStub("AceAddon-3.0"):NewAddon("ReQuest")  
+local bunnyLDB = LibStub("LibDataBroker-1.1"):NewDataObject("ReQuest", {  
+	type = "data source",  
+	text = "ReQuest!",  
+	icon = "Interface\\ICONS\\INV_Misc_Book_09",  
+	OnClick = function() ReQuestFrame:Show() end,  
+})  
+local icon = LibStub("LibDBIcon-1.0")  
+
+function addon:OnInitialize()
+	-- Assuming you have a ## SavedVariables: BunniesDB line in your TOC
+	self.db = LibStub("AceDB-3.0"):New("BunniesDB", {
+		profile = {
+			minimap = {
+				hide = false,
+			},
+		},
+	})
+	icon:Register("Bunnies", bunnyLDB, self.db.profile.minimap)
+end
 
 -- Store references to text objects
 ReQuestTextObjects = {
@@ -64,38 +86,6 @@ local function CreateWrappedText(parent, textContent, yOffset)
     text:Show()
     return text
 end
-
--- Minimap Button
-local minimapButton = CreateFrame("Button", "ReQuestMinimapButton", Minimap)
-minimapButton:SetSize(28, 28) -- Slightly smaller
-minimapButton:SetFrameStrata("LOW")
-minimapButton:SetPoint("TOPLEFT", Minimap, "TOPLEFT", -5, 5)
-
-minimapButton.icon = minimapButton:CreateTexture(nil, "BACKGROUND")
-minimapButton.icon:SetTexture("Interface\\ICONS\\INV_Misc_Book_09")
-minimapButton.icon:SetSize(18, 18)
-minimapButton.icon:SetPoint("CENTER")
-
-minimapButton:SetScript("OnClick", function()
-    if ReQuestFrame:IsShown() then
-        ReQuestFrame:Hide()
-        ReQuestDB.isVisible = false
-    else
-        ReQuestFrame:Show()
-        UpdateQuestLog()
-        ReQuestDB.isVisible = true
-    end
-end)
-
-minimapButton:SetScript("OnEnter", function(self)
-    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-    GameTooltip:SetText("|cffffcc00ReQuest|r\nClick to open quest log", 1, 1, 1)
-    GameTooltip:Show()
-end)
-
-minimapButton:SetScript("OnLeave", function()
-    GameTooltip:Hide()
-end)
 
 -- Function to clear quest texts
 local function ClearQuestText()
@@ -803,6 +793,7 @@ ReQuestFrame:SetScript("OnEvent", function(self, event, addon)
             UpdateQuestLog()
         else
             ReQuestFrame:Show()
+            icon:Show("MyLDB")
         end
     end
 end)
