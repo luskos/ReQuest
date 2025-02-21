@@ -1,25 +1,20 @@
 -- Ensure ReQuestDB exists
---ReQuestDB = ReQuestDB or { lang = "en", isVisible = true }
-
--- List of supported languages
--- local supportedLanguages = {
---     en = "English",
---     bgn = "Български",
---     fr = "Français"
--- }
+ReQuestDB = ReQuestDB or { lang = "bgn", isVisible = true }
 
 -- Store references to text objects
 ReQuestTextObjects = {
     titleTexts = {},
+    mainTexts = {},
+    subhelpTexts = {},
     helpTexts = {},
     objectiveTexts = {},
     goldTexts = {},
     xpTexts = {}
 }
 
--- Create the main UI Frame
+-- Create the main UI Frame with a 10% reduction
 local ReQuestFrame = CreateFrame("Frame", "ReQuestFrame", UIPParent, "BasicFrameTemplate")
-ReQuestFrame:SetSize(280, 420) -- Adjusted size with new proportions
+ReQuestFrame:SetSize(252, 378) -- 10% smaller than original (280x420)
 ReQuestFrame:SetPoint("CENTER")
 ReQuestFrame:SetMovable(true)
 ReQuestFrame:EnableMouse(true)
@@ -29,40 +24,40 @@ ReQuestFrame:SetScript("OnDragStop", ReQuestFrame.StopMovingOrSizing)
 ReQuestFrame:SetClampedToScreen(true)
 ReQuestFrame:Hide() -- Start hidden
 
--- Title text (adjusted for new size)
+-- Title text with adjusted font size
 ReQuestFrame.title = ReQuestFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
 ReQuestFrame.title:SetPoint("TOP", ReQuestFrame, "TOP", 0, -6)
 ReQuestFrame.title:SetText("|cffffcc00ReQuest|r")
-ReQuestFrame.title:SetFont("Interface\\AddOns\\ReQuest\\Fonts\\allods_west.ttf", 12, "OUTLINE")
+ReQuestFrame.title:SetFont("Interface\\AddOns\\ReQuest\\Fonts\\allods_west.ttf", 11, "OUTLINE") -- Reduced font size
 
--- Scrollable area (adjusted size)
+-- Scrollable area with adjusted size
 local scrollFrame = CreateFrame("ScrollFrame", "ReQuestScrollFrame", ReQuestFrame, "UIPanelScrollFrameTemplate")
-scrollFrame:SetSize(260, 360) -- Adjusted width & height proportionally
+scrollFrame:SetSize(234, 300) -- 10% smaller
 scrollFrame:SetPoint("TOP", ReQuestFrame, "TOP", 0, -35)
 
--- Scrollable content (adjusted width & height)
+-- Scrollable content
 local scrollChild = CreateFrame("Frame", nil, scrollFrame)
 scrollFrame:SetScrollChild(scrollChild)
-scrollChild:SetSize(240, 640) -- Decreased width slightly for scrollbar space
+scrollChild:SetSize(216, 536) -- Adjusted width & height
 
--- Adjust Scroll Bar positioning to fit the new frame
+-- Adjust Scroll Bar positioning
 local scrollBar = _G[scrollFrame:GetName() .. "ScrollBar"]
 scrollBar:ClearAllPoints()
 scrollBar:SetPoint("TOPRIGHT", scrollFrame, "TOPRIGHT", -5, -20)
 scrollBar:SetPoint("BOTTOMRIGHT", scrollFrame, "BOTTOMRIGHT", -5, 20)
 
+-- Background texture
 local bgTexture = ReQuestFrame:CreateTexture(nil, "BACKGROUND")
-bgTexture:SetAllPoints(ReQuestFrame) -- Make it fill the entire frame
+bgTexture:SetAllPoints(ReQuestFrame)
 bgTexture:SetTexture("Interface\\AddOns\\ReQuest\\Textures\\Background\\QuestBackgroundClassic.PNG")
-bgTexture:SetTexCoord(0, 1, 0, 1) -- Ensure full image is used
-
-bgTexture:SetPoint("TOPLEFT", ReQuestFrame, "TOPLEFT", 5, -15)
+bgTexture:SetTexCoord(0, 1, 0, 1)
+bgTexture:SetPoint("TOPLEFT", ReQuestFrame, "TOPLEFT", 5, -18)
 bgTexture:SetPoint("BOTTOMRIGHT", ReQuestFrame, "BOTTOMRIGHT", -5, 5)
 -- ✅ Fix for Text Overflow
 local function CreateWrappedText(parent, textContent, yOffset)
     local text = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     text:SetPoint("TOP", parent, "TOP", 0, yOffset)
-    text:SetWidth(230) -- Limit text width to prevent overflow
+    text:SetWidth(210) -- Limit text width to prevent overflow
     text:SetJustifyH("LEFT") -- Align text to the left
     text:SetWordWrap(true) -- Enable word wrap
     text:SetText(textContent)
@@ -70,35 +65,15 @@ local function CreateWrappedText(parent, textContent, yOffset)
     return text
 end
 
--- Language Selection Dropdown
---local langDropdown = CreateFrame("Frame", "ReQuestLangDropdown", ReQuestFrame, "UIDropDownMenuTemplate")
---langDropdown:SetPoint("TOPLEFT", ReQuestFrame, "TOPLEFT", -15, -5)
-
--- UIDropDownMenu_Initialize(langDropdown, function(self, level)
---     local info = UIDropDownMenu_CreateInfo()
---     for lang, name in pairs(supportedLanguages) do
---         info.text = name
---         info.arg1 = lang
---         info.func = function(_, arg1)
---             ReQuestDB.lang = arg1
---             UIDropDownMenu_SetText(langDropdown, supportedLanguages[arg1])
---             UpdateQuestLog()
---         end
---         UIDropDownMenu_AddButton(info, level)
---     end
--- end)
--- UIDropDownMenu_SetWidth(langDropdown, 120)
--- UIDropDownMenu_SetText(langDropdown, supportedLanguages[ReQuestDB.lang or "en"])
-
 -- Minimap Button
 local minimapButton = CreateFrame("Button", "ReQuestMinimapButton", Minimap)
-minimapButton:SetSize(32, 32)
+minimapButton:SetSize(28, 28) -- Slightly smaller
 minimapButton:SetFrameStrata("LOW")
 minimapButton:SetPoint("TOPLEFT", Minimap, "TOPLEFT", -5, 5)
 
 minimapButton.icon = minimapButton:CreateTexture(nil, "BACKGROUND")
-minimapButton.icon:SetTexture("Interface\\ICONS\\INV_Misc_Book_09") -- Example book icon
-minimapButton.icon:SetSize(20, 20)
+minimapButton.icon:SetTexture("Interface\\ICONS\\INV_Misc_Book_09")
+minimapButton.icon:SetSize(18, 18)
 minimapButton.icon:SetPoint("CENTER")
 
 minimapButton:SetScript("OnClick", function()
@@ -132,6 +107,14 @@ local function ClearQuestText()
         help:SetText("")
         help:Hide()
     end
+    for _, subhelp in ipairs(ReQuestTextObjects.subhelpTexts) do
+        subhelp:SetText("")
+        subhelp:Hide()
+    end
+    for _, main in ipairs(ReQuestTextObjects.mainTexts) do
+        main:SetText("")
+        main:Hide()
+    end
     for _, objective in ipairs(ReQuestTextObjects.objectiveTexts) do
         objective:SetText("")
         objective:Hide()
@@ -146,16 +129,27 @@ local function ClearQuestText()
     end
 end
 
-
--- Function to get quest help in the selected language
-local function GetQuestHelp(questID)
-    local lang = ReQuestDB.lang or "bgn"
+-- Function to get quest main quest description in the selected language
+local function GetQuestMain(questID)
+    local lang = "fr"
     if ReQuestQuests and ReQuestQuests[questID] then
-        return ReQuestQuests[questID][lang] or ReQuestQuests[questID]["bgn"]
+        return ReQuestQuests[questID]["fr"]
     else
         return "|cffff5555Няма налична информация.|r"
     end
 end
+
+-- Function to get quest help in the selected language
+local function GetQuestHelp(questID)
+    local lang = "bgn"
+    if ReQuestQuests and ReQuestQuests[questID] then
+        return ReQuestQuests[questID]["bgn"]
+    else
+        return "|cffff5555Няма налична информация.|r"
+    end
+end
+
+
 
 
 -- Function to clear all children in the scrollable area
@@ -240,50 +234,38 @@ local function FormatCurrencyString(coinText)
 end
 
 -- Function to create a YouTube button with thumbnail and link
-local function CreateYouTubeButton(videoID, yOffset)
-    local youtubeButton = CreateFrame("Button", nil, scrollChild, "UIPanelButtonTemplate")
-    youtubeButton:SetSize(120, 70)  
-    youtubeButton:SetPoint("TOP", scrollChild, "TOP", 0, yOffset) 
-
-    -- Placeholder thumbnail (replace with your own)
-    local thumbnailURL = "Interface\\AddOns\\ReQuest\\Icons\\YouTubeThumbnail.png"  
+local function CreateYouTubeLink(videoID, yOffset)
+    -- YouTube icon path
+    local thumbnailURL = "Interface\\AddOns\\ReQuest\\Icons\\youtube-logo.png"
 
     -- Create the texture for the thumbnail
     youtubeButton.icon = youtubeButton:CreateTexture(nil, "ARTWORK")
-    youtubeButton.icon:SetSize(120, 70)  
+    youtubeButton.icon:SetSize(60, 35)
     youtubeButton.icon:SetPoint("CENTER", youtubeButton, "CENTER", 0, 0)
-    youtubeButton.icon:SetTexture(thumbnailURL) 
+    youtubeButton.icon:SetTexture(thumbnailURL)
 
-    -- Set tooltip
-    youtubeButton:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetText("|cFFFF0000YouTube Guide|r\nClick to watch the guide", 1, 1, 1)
-        GameTooltip:Show()
-    end)
-    youtubeButton:SetScript("OnLeave", function()
-        GameTooltip:Hide()
-    end)
-
-    -- Open a Copy-Paste Window
-    youtubeButton:SetScript("OnClick", function()
-        local url = "https://www.youtube.com/watch?v=" .. videoID
-        StaticPopupDialogs["REQUEST_YOUTUBE"] = {
-            text = "Копирайте връзката в браузър:",
-            button1 = "Close",
-            OnShow = function(self) self.editBox:SetText(url) self.editBox:HighlightText() end,
-            timeout = 0,
-            whileDead = true,
-            hideOnEscape = true,
-            hasEditBox = true,
-            editBoxWidth = 260,
-            enterClicksFirstButton = true,
-        }
-        StaticPopup_Show("REQUEST_YOUTUBE")
-    end)
+    local url = "https://www.youtube.com/watch?v=" .. videoID
+    StaticPopupDialogs["REQUEST_YOUTUBE"] = {
+        text = "Копирайте връзката в браузър:",
+        button1 = "Close",
+        OnShow = function(self)
+            self.editBox:SetText(url)
+            self.editBox:HighlightText()
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        hasEditBox = true,
+        editBoxWidth = 260,
+        enterClicksFirstButton = true,
+    }
+    StaticPopup_Show("REQUEST_YOUTUBE")
 
     youtubeButton:Show()
-    return youtubeButton
+    --return youtubeButton
 end
+
+
 
 local function GetQuestVideoURL(questID)
     if ReQuestQuests and ReQuestQuests[questID] then
@@ -298,15 +280,12 @@ local viewedQuestID = nil
 -- Функция за обновяване на прозореца за куестове
 local function UpdateReQuestWindow(questID)
     screen = 0
-    -- Example YouTube video for this quest
-    local youtubeVideoID = GetQuestVideoURL(questID)
-    if youtubeVideoID then
-        local youtubeButton = CreateYouTubeButton(youtubeVideoID, yOffset)
-        yOffset = yOffset - 80  -- Adjust spacing to prevent overlapping
-    end
+    
     -- Clear previous quest information
     ClearQuestText()
     ReQuestTextObjects.helpTexts = {}
+    ReQuestTextObjects.subhelpTexts = {}
+    ReQuestTextObjects.mainTexts = {}
     ReQuestTextObjects.objectiveTexts = {}
     ReQuestTextObjects.goldTexts = {}
     ReQuestTextObjects.xpTexts = {}
@@ -316,16 +295,17 @@ local function UpdateReQuestWindow(questID)
         print("Invalid quest ID or title not found:", questID)
         return
     end
-    
+    print("QuestID:", questID)
     local questHelp = GetQuestHelp(questID)
+    local questMain = GetQuestMain(questID)
     local objectives = C_QuestLog.GetQuestObjectives(questID)
     
     -- **Start positioning elements**
-    local yOffset = -10
+    local yOffset = -9
     
     -- **Quest Title**
     local titleText = scrollChild:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    titleText:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
+    titleText:SetFont("Fonts\\FRIZQT__.TTF", 13, "OUTLINE")
     
     if C_CampaignInfo.IsCampaignQuest(questID) then
         titleText:SetText(campaignIcon .. "|cffffcc00" .. info .. "|r")
@@ -342,12 +322,38 @@ local function UpdateReQuestWindow(questID)
     
     yOffset = yOffset - 25 -- Space after title
     
+    -- **Quest Main Description**
+    local mainText = scrollChild:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    mainText:SetFont("Interface\\AddOns\\ReQuest\\Fonts\\allods_west.ttf", 10)
+    mainText:SetText("|cFF543D1E" .. questMain .. "|r")
+    mainText:SetPoint("TOP", scrollChild, "TOP", 0, yOffset)
+    mainText:SetWidth(220)
+    mainText:SetJustifyH("CENTER")
+    mainText:SetWordWrap(true)
+    mainText:SetParent(scrollChild)
+    mainText:Show()
+    table.insert(ReQuestTextObjects.mainTexts, mainText)
+
+    yOffset = yOffset - mainText:GetHeight() - 15 -- Space after quest description
+    
+    local subhelpText = scrollChild:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    subhelpText:SetFont("Interface\\AddOns\\ReQuest\\Fonts\\allods_west.ttf", 13)
+    subhelpText:SetText("|cFF543D1EОписание|r")
+    subhelpText:SetPoint("TOP", scrollChild, "TOP", 0, yOffset)
+    subhelpText:SetWidth(220)
+    subhelpText:SetJustifyH("CENTER")
+    subhelpText:SetWordWrap(true)
+    subhelpText:SetParent(scrollChild)
+    subhelpText:Show()
+    table.insert(ReQuestTextObjects.subhelpTexts, subhelpText)
+
+    yOffset = yOffset - subhelpText:GetHeight() - 10
     -- **Quest Description**
     local helpText = scrollChild:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    helpText:SetFont("Interface\\AddOns\\ReQuest\\Fonts\\allods_west.ttf", 11)
+    helpText:SetFont("Interface\\AddOns\\ReQuest\\Fonts\\allods_west.ttf", 10)
     helpText:SetText("|cFF543D1E" .. questHelp .. "|r")
     helpText:SetPoint("TOP", scrollChild, "TOP", 0, yOffset)
-    helpText:SetWidth(230)
+    helpText:SetWidth(220)
     helpText:SetJustifyH("CENTER")
     helpText:SetWordWrap(true)
     helpText:SetParent(scrollChild)
@@ -366,9 +372,10 @@ local function UpdateReQuestWindow(questID)
     end
     
     local objectiveText = scrollChild:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    objectiveText:SetFont("Interface\\AddOns\\ReQuest\\Fonts\\allods_west.ttf", 11, "OUTLINE")
+    objectiveText:SetFont("Interface\\AddOns\\ReQuest\\Fonts\\allods_west.ttf", 10, "OUTLINE")
     objectiveText:SetText(waypointIcon .. questInfo .. "|r")
     objectiveText:SetPoint("TOP", scrollChild, "TOP", 0, yOffset)
+    objectiveText:SetWidth(220)
     objectiveText:SetJustifyH("CENTER")
     objectiveText:SetParent(scrollChild)
     objectiveText:Show()
@@ -381,7 +388,7 @@ local function UpdateReQuestWindow(questID)
     local formattedCoinText = FormatCurrencyString(rawCoinText)
     
     local goldText = scrollChild:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    goldText:SetFont("Interface\\AddOns\\ReQuest\\Fonts\\allods_west.ttf", 11, "OUTLINE")
+    goldText:SetFont("Interface\\AddOns\\ReQuest\\Fonts\\allods_west.ttf", 10, "OUTLINE")
     goldText:SetText("|cFF00FF00Парична награда: |r " .. formattedCoinText)
     goldText:SetPoint("TOP", scrollChild, "TOP", 0, yOffset)
     goldText:SetJustifyH("CENTER")
@@ -395,7 +402,7 @@ local function UpdateReQuestWindow(questID)
     local xpReward = GetQuestLogRewardXP(questID)
     if xpReward and xpReward > 0 then
         local xpText = scrollChild:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        xpText:SetFont("Interface\\AddOns\\ReQuest\\Fonts\\allods_west.ttf", 11, "OUTLINE")
+        xpText:SetFont("Interface\\AddOns\\ReQuest\\Fonts\\allods_west.ttf", 10, "OUTLINE")
         xpText:SetText("|cFF00FF00Награда Опит:|r " .. xpReward .. " XP")
         xpText:SetPoint("TOP", scrollChild, "TOP", 0, yOffset)
         xpText:SetJustifyH("CENTER")
@@ -403,21 +410,26 @@ local function UpdateReQuestWindow(questID)
         xpText:Show()
         table.insert(ReQuestTextObjects.xpTexts, xpText)
     
-        yOffset = yOffset - 20 -- Space after XP reward
+        yOffset = yOffset - 25 -- Space after XP reward
     end
     
-    -- **🎁 Item Rewards**
+    -- **🎁 Item Rewards (Brought Closer to XP & Gold)**
     local numRewards = GetNumQuestLogRewards(questID)
     if numRewards and numRewards > 0 then
         for i = 1, numRewards do
             local itemName, itemTexture, numItems, quality, isUsable, itemID, itemLevel = GetQuestLogRewardInfo(i, questID)
             if itemName and itemTexture then
+                -- **Create item frame (for better centering)**
+                local itemFrame = CreateFrame("Frame", nil, scrollChild)
+                itemFrame:SetSize(200, 20) -- Adjust width to your liking
+                itemFrame:SetPoint("TOP", scrollChild, "TOP", 0, yOffset)
+
                 -- **Create item icon**
-                local itemIcon = scrollChild:CreateTexture(nil, "ARTWORK")
-                itemIcon:SetSize(16, 16)
-                itemIcon:SetPoint("LEFT", scrollChild, "LEFT", 10, yOffset)
+                local itemIcon = itemFrame:CreateTexture(nil, "ARTWORK")
+                itemIcon:SetSize(20, 20) -- Slightly larger for visibility
+                itemIcon:SetPoint("LEFT", itemFrame, "LEFT", 0, 0) -- Left within the frame
                 itemIcon:SetTexture(itemTexture)
-    
+
                 -- Tooltip on hover
                 itemIcon:SetScript("OnEnter", function()
                     GameTooltip:SetOwner(itemIcon, "ANCHOR_RIGHT")
@@ -427,68 +439,89 @@ local function UpdateReQuestWindow(questID)
                 itemIcon:SetScript("OnLeave", function()
                     GameTooltip:Hide()
                 end)
-    
+
                 -- **Create item text**
                 local rarityColor = ITEM_QUALITY_COLORS[quality] and ITEM_QUALITY_COLORS[quality].hex or "|cFFFFFFFF"
-                local itemText = scrollChild:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-                itemText:SetFont("Interface\\AddOns\\ReQuest\\Fonts\\allods_west.ttf", 11, "OUTLINE")
+                local itemText = itemFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+                itemText:SetFont("Interface\\AddOns\\ReQuest\\Fonts\\allods_west.ttf", 10, "OUTLINE")
                 itemText:SetText(rarityColor .. itemName .. "|r x" .. numItems)
                 itemText:SetPoint("LEFT", itemIcon, "RIGHT", 5, 0)
-    
+
                 -- Store elements
                 table.insert(ReQuestTextObjects.objectiveTexts, itemText)
                 table.insert(ReQuestTextObjects.itemIcons, itemIcon)
-    
-                yOffset = yOffset - 25 -- Space after each item
+
+                yOffset = yOffset - 25 -- Adjust spacing for multiple rewards
             end
         end
     end
-    
-    -- **🔘 Selectable Rewards**
-    local numChoices = GetNumQuestLogChoices(questID)
+
+    -- 🏆 Selectable Rewards (Now Near XP & Gold, Aligned to Left)
+    local numChoices = GetNumQuestLogChoices(questID) -- Get the count of selectable rewards
     if numChoices and numChoices > 0 then
-        -- Add "Choose Reward" label
+        -- Add a text label for clarity
         local chooseText = scrollChild:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        chooseText:SetFont("Interface\\AddOns\\ReQuest\\Fonts\\allods_west.ttf", 11, "OUTLINE")
-        chooseText:SetText("|cFFFFCC00Избери Награда:|r")
-        chooseText:SetPoint("TOP", scrollChild, "TOP", 0, yOffset)
+        chooseText:SetFont("Interface\\AddOns\\ReQuest\\Fonts\\allods_west.ttf", 10, "OUTLINE")
+        chooseText:SetText("|cFFFFCC00Възможни Награди:|r")
+        chooseText:SetPoint("TOP", scrollChild, "TOP", 0, yOffset) -- Centered horizontally
         chooseText:Show()
         table.insert(ReQuestTextObjects.objectiveTexts, chooseText)
-    
-        yOffset = yOffset - 20 -- Space after label
-    
+
+        yOffset = yOffset - 20 -- Space before choices
+
         for i = 1, numChoices do
             local itemName, itemTexture, numItems, quality, isUsable, itemID, itemLevel = GetQuestLogChoiceInfo(i, questID)
+
             if itemName and itemTexture then
-                -- Create selectable reward icon & text
+                -- Create the item icon
                 local itemIcon = scrollChild:CreateTexture(nil, "ARTWORK")
-                itemIcon:SetSize(32, 32)
-                itemIcon:SetPoint("LEFT", scrollChild, "LEFT", 10, yOffset)
+                itemIcon:SetSize(32, 32) -- Bigger icons
+                itemIcon:SetPoint("TOPLEFT", scrollChild, "TOPLEFT", 10, yOffset) -- Align to left
                 itemIcon:SetTexture(itemTexture)
-    
+                itemIcon:Show()
+
+                -- Tooltip on hover
+                itemIcon:SetScript("OnEnter", function(self)
+                    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                    GameTooltip:SetHyperlink("item:" .. itemID) -- Load full item info from WoW
+                    GameTooltip:Show()
+                end)
+                itemIcon:SetScript("OnLeave", function()
+                    GameTooltip:Hide()
+                end)
+
+                -- Create the item name text
                 local itemText = scrollChild:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-                itemText:SetFont("Interface\\AddOns\\ReQuest\\Fonts\\allods_west.ttf", 11, "OUTLINE")
+                itemText:SetFont("Interface\\AddOns\\ReQuest\\Fonts\\allods_west.ttf", 10, "OUTLINE")
+
+                -- Add quality color based on item rarity
+                local rarityColor = ITEM_QUALITY_COLORS[quality] and ITEM_QUALITY_COLORS[quality].hex or "|cFFFFFFFF"
                 itemText:SetText(rarityColor .. itemName .. "|r x" .. numItems)
-                itemText:SetPoint("LEFT", itemIcon, "RIGHT", 5, 0)
-    
+                itemText:SetPoint("LEFT", itemIcon, "RIGHT", 5, 0) -- Align text next to icon
+                itemText:Show()
+
+                -- Store them to be hidden later
                 table.insert(ReQuestTextObjects.objectiveTexts, itemText)
                 table.insert(ReQuestTextObjects.itemIcons, itemIcon)
-    
-                yOffset = yOffset - 40 -- Adjust spacing for selectable rewards
+
+                yOffset = yOffset - 40 -- Adjust spacing between items
+            else
+                print(" Missing item data for selectable reward " .. i)
             end
         end
     end
-    
+
     scrollChild:SetHeight(math.abs(yOffset) + 20)
     scrollFrame:UpdateScrollChildRect()
     
-    -- Запазване на текущия куест
+    -- Save current quest ID
     viewedQuestID = questID
 end
 
+
 -- Function to update the Quest Log UI/ MENU
 local function UpdateQuestLog()
-    
+
     -- First, clear previous rewards before adding new ones
     for _, obj in ipairs(ReQuestTextObjects.objectiveTexts) do
         obj:Hide() -- Hide all previous text objects
@@ -496,6 +529,11 @@ local function UpdateQuestLog()
     for _, obj in ipairs(ReQuestTextObjects.itemIcons or {}) do
         obj:Hide() -- Hide all previous item icons
     end
+
+    for _, obj in ipairs(ReQuestTextObjects.subhelpTexts or {}) do
+        obj:Hide() -- Hide all previous item icons
+    end
+    ReQuestTextObjects.subhelpTexts = {}
     ReQuestTextObjects.objectiveTexts = {}
     ReQuestTextObjects.itemIcons = {}
 
@@ -570,8 +608,6 @@ ReQuestFrame:SetScript("OnShow", function()
     UpdateQuestLog()
 end)
 
-
-
 -- Function to abandon the current quest
 local function AbandonCurrentQuest()
     if viewedQuestID then
@@ -603,8 +639,8 @@ end
 
 -- Refresh Button
 local refreshButton = CreateFrame("Button", "RefreshTextButton", ReQuestFrame, "UIPanelButtonTemplate")
-refreshButton:SetSize(100, 30)
-refreshButton:SetPoint("BOTTOMRIGHT", ReQuestFrame, "BOTTOMRIGHT", -15, 10)
+refreshButton:SetSize(90, 27) -- 10% smaller
+refreshButton:SetPoint("BOTTOMRIGHT", ReQuestFrame, "BOTTOMRIGHT", -10, 8)
 refreshButton:SetText("Назад")
 refreshButton:SetScript("OnClick", function()
     UpdateQuestLog()
@@ -612,12 +648,71 @@ end)
 
 -- Abandon Button
 local abandonButton = CreateFrame("Button", "AbandonQuestButton", ReQuestFrame, "UIPanelButtonTemplate")
-abandonButton:SetSize(100, 30)
-abandonButton:SetPoint("BOTTOMLEFT", ReQuestFrame, "BOTTOMLEFT", 10, 10)
+abandonButton:SetSize(90, 27) -- 10% smaller
+abandonButton:SetPoint("BOTTOMLEFT", ReQuestFrame, "BOTTOMLEFT", 10, 8)
 abandonButton:SetText("Махни задача")
 abandonButton:SetScript("OnClick", function()
     AbandonCurrentQuest()
 end)
+
+-----------------------------------------------------
+local thumbnailURL = "Interface\\AddOns\\ReQuest\\Icons\\youtube-logo.png"
+-- Create YouTube Button (Persistent)
+local youtubeButton = CreateFrame("Button", "YouTubeButton", ReQuestFrame, nil)
+youtubeButton:SetSize(50, 15)
+youtubeButton:SetPoint("TOPLEFT", ReQuestFrame, "TOPLEFT", 5, -25) -- Anchor to top-left with slight padding
+youtubeButton:Hide() -- Hide initially
+
+-- Create the texture for the thumbnail
+youtubeButton.icon = youtubeButton:CreateTexture(nil, "ARTWORK")
+youtubeButton.icon:SetSize(18, 18)
+youtubeButton.icon:SetPoint("CENTER", youtubeButton, "CENTER", 0, 0) -- Center the icon inside the button
+youtubeButton.icon:SetTexture(thumbnailURL)
+
+-- Set up the button tooltip
+youtubeButton:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+    GameTooltip:SetText("|cFFFF0000YouTube Guide|r\nКликни, за да гледаш видео", 1, 1, 1)
+    GameTooltip:Show()
+end)
+youtubeButton:SetScript("OnLeave", function()
+    GameTooltip:Hide()
+end)
+
+-- Set up click behavior (Opens YouTube popup)
+youtubeButton:SetScript("OnClick", function()
+    local videoID = GetQuestVideoURL(viewedQuestID)
+    if videoID then
+        local url = "https://www.youtube.com/watch?v=" .. videoID
+        StaticPopupDialogs["REQUEST_YOUTUBE"] = {
+            text = "Копирайте връзката в браузър:",
+            button1 = "Close",
+            OnShow = function(self)
+                self.editBox:SetText(url)
+                self.editBox:HighlightText()
+            end,
+            timeout = 0,
+            whileDead = true,
+            hideOnEscape = true,
+            hasEditBox = true,
+            editBoxWidth = 260,
+            enterClicksFirstButton = true,
+        }
+        StaticPopup_Show("REQUEST_YOUTUBE")
+    else
+        print("|cFFFF0000[ReQuest] No YouTube guide available for this quest.|r")
+    end
+end)
+
+-- Function to Show or Hide the YouTube Button Based on Quest Data
+local function UpdateYouTubeButton(questID)
+    local videoID = GetQuestVideoURL(questID)
+    if videoID then
+        youtubeButton:Show() -- Show button if video exists
+    else
+        youtubeButton:Hide() -- Hide button if no video exists
+    end
+end
 
 -- Ensure the quest log updates when the frame is shown
 ReQuestFrame:SetScript("OnShow", function()
@@ -649,17 +744,17 @@ end
 
 local function AutoUpdate()
     if screen == 0 then
-        youtubeButton:Show()
         refreshButton:Show()
         abandonButton:Show()
+        youtubeButton:Show()
         --trackButton:Show()
         ClearScrollChild()
         UpdateReQuestWindow(savedQuestID)
     else
         UpdateQuestLog()
-        youtubeButton:Hide()
         refreshButton:Hide()
         abandonButton:Hide()
+        youtubeButton:Hide()
         --trackButton:Hide()
     end
 end
@@ -675,21 +770,6 @@ abandonButton:SetScript("OnClick", function()
     abandonButton:Hide() -- Hide the button
     AbandonCurrentQuest() -- Reload the quest list
 end)
-
---local trackValue = false
--- ✅ Фикс за Click Event
--- trackButton:SetScript("OnClick", function()
---     if trackValue == true then
---         trackValue = false
---         C_QuestLog.RemoveQuestWatch(viewedQuestID)
---         trackButton:SetText("Track")
---     else
---         trackValue = true
---         C_QuestLog.AddQuestWatch(viewedQuestID, true) -- Флагът true го добавя към списъка за гледане
---         trackButton:SetText("Untrack")
---     end
--- end)
-
 
 local ticker = C_Timer.NewTicker(0.6, AutoUpdate)
 -- Register events to refresh the quest log dynamically
