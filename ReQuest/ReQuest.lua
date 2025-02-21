@@ -280,7 +280,7 @@ local viewedQuestID = nil
 -- Функция за обновяване на прозореца за куестове
 local function UpdateReQuestWindow(questID)
     screen = 0
-    
+    print("Ip")
     -- Clear previous quest information
     ClearQuestText()
     ReQuestTextObjects.helpTexts = {}
@@ -553,49 +553,49 @@ local function UpdateQuestLog()
     local yOffset = -5
 
     for _, questID in ipairs(activeQuests) do
-       
-        local questTitle = C_QuestLog.GetTitleForQuestID(questID)
-        viewedQuestID = questID
-        -- Create a clickable button
-        local questButton = CreateFrame("Button", nil, scrollChild)
-        questButton:SetSize(300, 20) -- Button size
-        questButton:SetPoint("TOP", scrollChild, "TOP", 0, yOffset)
+        if questID ~= 82146 and questID ~= 82156 and questID ~= 75511 and questID ~= 77718 and questID ~= 77719 and questID ~= 77722 then
+            local questTitle = C_QuestLog.GetTitleForQuestID(questID)
+            viewedQuestID = questID
+            -- Create a clickable button
+            local questButton = CreateFrame("Button", nil, scrollChild)
+            questButton:SetSize(300, 20) -- Button size
+            questButton:SetPoint("TOP", scrollChild, "TOP", 0, yOffset)
+    
+            -- Add text to the button
+            local titleText = questButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+            if C_CampaignInfo.IsCampaignQuest(questID) then
+                titleText:SetText(campaignIcon .. "|cffffcc00" .. questTitle .. "|r")
+            else
+                titleText:SetText(normalQuestIcon .. "|cffffcc00" .. questTitle .. "|r")
+            end
+            if C_QuestLog.IsMetaQuest(questID) then
+                titleText:SetText(metaQuest .. "|cffffcc00" .. questTitle .. "|r")
+            end
+            titleText:SetPoint("CENTER")
+            questButton:SetFontString(titleText)
+    
+            -- Set up click behavior
+            questButton:SetScript("OnClick", function()
+                savedQuestID = questID
+                UpdateReQuestWindow(questID) -- Load quest details
+            end)
+            -- Mouse-over highlight effect
+            questButton:SetHighlightTexture("Interface\\BUTTONS\\UI-Common-MouseHilight")
 
-        -- Add text to the button
-        local titleText = questButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        if C_CampaignInfo.IsCampaignQuest(questID) then
-            titleText:SetText(campaignIcon .. "|cffffcc00" .. questTitle .. "|r")
-        else
-            titleText:SetText(normalQuestIcon .. "|cffffcc00" .. questTitle .. "|r")
+            -- Tooltip on hover
+            questButton:SetScript("OnEnter", function(self)
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                GameTooltip:SetText("|cffffcc00" .. questTitle .. "|r", 1, 1, 1, 1, true)
+                GameTooltip:AddLine("Click to see quest details!", 0, 1, 0)
+                GameTooltip:Show()
+            end)
+            questButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+            questButton:Show()
+            table.insert(ReQuestTextObjects.titleTexts, questButton)
+
+            yOffset = yOffset - 25 -- Move down for next entry
         end
-        if C_QuestLog.IsMetaQuest(questID) then
-            titleText:SetText(metaQuest .. "|cffffcc00" .. questTitle .. "|r")
-        end
-        titleText:SetPoint("CENTER")
-        questButton:SetFontString(titleText)
-
-        -- Set up click behavior
-        questButton:SetScript("OnClick", function()
-            savedQuestID = questID
-            UpdateReQuestWindow(questID) -- Load quest details
-        end)
-
-        -- Mouse-over highlight effect
-        questButton:SetHighlightTexture("Interface\\BUTTONS\\UI-Common-MouseHilight")
-
-        -- Tooltip on hover
-        questButton:SetScript("OnEnter", function(self)
-            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-            GameTooltip:SetText("|cffffcc00" .. questTitle .. "|r", 1, 1, 1, 1, true)
-            GameTooltip:AddLine("Click to see quest details!", 0, 1, 0)
-            GameTooltip:Show()
-        end)
-        questButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
-
-        questButton:Show()
-        table.insert(ReQuestTextObjects.titleTexts, questButton)
-
-        yOffset = yOffset - 25 -- Move down for next entry
     end
 
     scrollChild:SetHeight(math.abs(yOffset) + 20)
@@ -749,9 +749,9 @@ local function AutoUpdate()
         youtubeButton:Show()
         --trackButton:Show()
         ClearScrollChild()
-        UpdateReQuestWindow(savedQuestID)
+        --UpdateReQuestWindow(savedQuestID)
     else
-        UpdateQuestLog()
+        --UpdateQuestLog()
         refreshButton:Hide()
         abandonButton:Hide()
         youtubeButton:Hide()
