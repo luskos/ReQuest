@@ -270,7 +270,7 @@ local viewedQuestID = nil
 -- Функция за обновяване на прозореца за куестове
 local function UpdateReQuestWindow(questID)
     screen = 0
-    print("Ip")
+    --print("Ip")
     -- Clear previous quest information
     ClearQuestText()
     ReQuestTextObjects.helpTexts = {}
@@ -285,7 +285,7 @@ local function UpdateReQuestWindow(questID)
         print("Invalid quest ID or title not found:", questID)
         return
     end
-    print("QuestID:", questID)
+    --print("QuestID:", questID)
     local questHelp = GetQuestHelp(questID)
     local questMain = GetQuestMain(questID)
     local objectives = C_QuestLog.GetQuestObjectives(questID)
@@ -739,7 +739,7 @@ local function AutoUpdate()
         youtubeButton:Show()
         --trackButton:Show()
         ClearScrollChild()
-        --UpdateReQuestWindow(savedQuestID)
+        UpdateReQuestWindow(savedQuestID)
     else
         --UpdateQuestLog()
         refreshButton:Hide()
